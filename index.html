@@ -1,8 +1,8 @@
 <!DOCTYPE html>
 <html lang="ru">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
     <title>Доступ к видео</title>
     <style>
         body {
@@ -25,6 +25,7 @@
         iframe {
             border-radius: 8px;
             box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+            max-width: 100%;
         }
         .access-form {
             margin-top: 20px;
@@ -61,7 +62,7 @@
             font-size: 16px;
             width: 100%;
             font-weight: bold;
-            transition: background-color 0.3s;
+            transition: background-color 0.3s, transform 0.1s;
         }
         button:hover {
             background-color: #cc0000;
@@ -123,97 +124,142 @@
             0% { transform: rotate(0deg); }
             100% { transform: rotate(360deg); }
         }
+
+        /* Немного адаптивности */
+        @media (max-width: 600px) {
+            iframe { height: 200px; }
+        }
     </style>
 </head>
 <body>
-    <div class="container">
-        <div class="video-container">
-            <iframe width="560" height="315" src="https://www.youtube.com/embed/N1pYQ6JYWxo?si=w3Yxz6k8iwS4BWqD" 
-                    frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" 
-                    allowfullscreen>
+    <div class="container" role="main">
+        <div class="video-container" aria-hidden="true">
+            <!-- Видео здесь просто для примера. Можно убрать, если не нужно -->
+            <iframe width="560" height="315" src="https://www.youtube.com/embed/N1pYQ6JYWxo?si=w3Yxz6k8iwS4BWqD"
+                    frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                    allowfullscreen title="Видео-превью">
             </iframe>
         </div>
 
         <div class="instructions">
             <h3>Инструкция:</h3>
-            <p>Для получения доступа введите правильный код в поле ниже и нажмите "Продолжить".</p>
+            <p>Для получения доступа введите правильный код в поле ниже и нажмите "Продолжить". Код вводится <strong>только заглавными буквами</strong> — ввод автоматически приведётся к верхнему регистру.</p>
         </div>
 
-        <div class="access-form">
+        <form id="access-form" class="access-form" onsubmit="return false;" aria-label="Форма доступа">
             <div class="input-group">
                 <label for="code-input">Введите код доступа:</label>
-                <input type="text" id="code-input" placeholder="Введите код здесь (только заглавные буквы)" autocomplete="off">
+                <input type="text" id="code-input" placeholder="Введите код здесь (только заглавные буквы)" autocomplete="off" inputmode="latin">
             </div>
-            <button onclick="checkAccess()">Продолжить</button>
-            <div id="error-message" class="error">❌ Неверный код! Попробуйте снова.</div>
-            <div id="success-message" class="success">
-                ✅ Доступ разрешен! Перенаправляем...
-                <div class="loader"></div>
-            </div>
-        </div>
+            <button type="button" id="submit-btn">Продолжить</button>
 
-        <div id="redirect-section" class="hidden">
+            <div id="error-message" class="error" role="status" aria-live="polite">❌ Неверный код! Попробуйте снова.</div>
+            <div id="success-message" class="success" role="status" aria-live="polite">
+                ✅ Доступ разрешен! Перенаправляем...
+                <div class="loader" aria-hidden="true"></div>
+            </div>
+        </form>
+
+        <div id="redirect-section" class="hidden" aria-hidden="true">
             <div class="redirect-message">
                 <h2>Доступ получен!</h2>
-                <p>Вы будете перенаправлены на защищенную страницу...</p>
+                <p>Вы будете перенаправлены на защищённую страницу...</p>
             </div>
         </div>
     </div>
 
     <script>
+        // ВНИМАНИЕ:
+        // Всё, что находится в этом скрипте, видимо в исходном коде страницы.
+        // Если этот код служит настоящей защитой — его нельзя хранить только на клиенте.
+        // Для реальной защиты переноси проверку на сервер.
+
+        // Константа правильного кода (пример — оставил как у тебя)
         const CORRECT_CODE = "RDRULRRLUDLDURLDULDLRLULLULDLUDLRULDULRUDLRUL";
-        
+
+        // Ссылка на YouTube для редиректа; замени на нужную.
+        const youtubeLink = "https://youtu.be/9cv9kuSAeCk?si=A1iJukgWVuoQCjFF";
+
+        // Элементы
+        const inputEl = document.getElementById('code-input');
+        const errorEl = document.getElementById('error-message');
+        const successEl = document.getElementById('success-message');
+        const redirectSection = document.getElementById('redirect-section');
+        const submitBtn = document.getElementById('submit-btn');
+
+        // Приводим ввод к верхнему регистру при вводе (пользовательский комфорт)
+        inputEl.addEventListener('input', () => {
+            // Сохраняем позицию курсора:
+            const start = inputEl.selectionStart;
+            const end = inputEl.selectionEnd;
+            inputEl.value = inputEl.value.toUpperCase();
+            // Восстанавливаем позицию курсора (если поддерживается)
+            try { inputEl.setSelectionRange(start, end); } catch(e) {}
+        });
+
+        function showError(msg) {
+            errorEl.textContent = "❌ " + (msg || "Неверный код! Попробуйте снова.");
+            errorEl.style.display = 'block';
+            // визуальная подсказка на поле
+            inputEl.style.borderColor = '#d32f2f';
+            setTimeout(() => inputEl.style.borderColor = '#ddd', 1000);
+        }
+
+        function showSuccess() {
+            errorEl.style.display = 'none';
+            successEl.style.display = 'block';
+            redirectSection.classList.remove('hidden');
+            redirectSection.setAttribute('aria-hidden', 'false');
+        }
+
         function checkAccess() {
-            const userInput = document.getElementById('code-input').value.trim();
-            const errorMessage = document.getElementById('error-message');
-            const successMessage = document.getElementById('success-message');
-            const redirectSection = document.getElementById('redirect-section');
-            
-            // Скрываем все сообщения
-            errorMessage.style.display = 'none';
-            successMessage.style.display = 'none';
+            // trim + upper для точного сравнения
+            const userInput = inputEl.value.trim().toUpperCase();
+
+            // Скрываем старые сообщения
+            errorEl.style.display = 'none';
+            successEl.style.display = 'none';
             redirectSection.classList.add('hidden');
-            
+            redirectSection.setAttribute('aria-hidden', 'true');
+
+            if (!userInput) {
+                showError("Поле не может быть пустым.");
+                return;
+            }
+
             if (userInput === CORRECT_CODE) {
-                // Показываем сообщение об успехе
-                successMessage.style.display = 'block';
-                
-                // ВСТАВЬТЕ СЮДА ВАШУ YOUTUBE ССЫЛКУ
-                // ↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓
-                const youtubeLink = "https://youtu.be/9cv9kuSAeCk?si=A1iJukgWVuoQCjFF";
-                // ↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑
-                
-                // Перенаправление с задержкой 3 секунды
+                showSuccess();
+
+                // Проверка, что ссылка корректна (не пустая и не placeholder)
+                if (!youtubeLink || youtubeLink.trim() === "") {
+                    alert("Ссылка не настроена! Пожалуйста, вставьте вашу YouTube ссылку в код.");
+                    return;
+                }
+
+                // Перенаправляем через 3 секунды
                 setTimeout(() => {
-                    if (youtubeLink !== "https://youtu.be/9cv9kuSAeCk?si=A1iJukgWVuoQCjFF") {
-                        window.location.href = youtubeLink;
-                    } else {
-                        // Если ссылка не вставлена, показываем сообщение
-                        alert("Ссылка не настроена! Пожалуйста, вставьте вашу YouTube ссылку в код.");
-                    }
+                    // Прямое перенаправление; если нужно открыть в новой вкладке:
+                    // window.open(youtubeLink, '_blank', 'noopener');
+                    window.location.href = youtubeLink;
                 }, 3000);
-                
             } else {
-                // Показываем сообщение об ошибке
-                errorMessage.style.display = 'block';
-                
-                // Добавляем анимацию ошибки
-                document.getElementById('code-input').style.borderColor = '#d32f2f';
-                setTimeout(() => {
-                    document.getElementById('code-input').style.borderColor = '#ddd';
-                }, 1000);
+                showError();
             }
         }
 
-        // Добавляем обработчик нажатия Enter
-        document.getElementById('code-input').addEventListener('keypress', function(e) {
+        // Нажатие кнопки
+        submitBtn.addEventListener('click', checkAccess);
+
+        // Обработчик Enter в поле
+        inputEl.addEventListener('keydown', function(e) {
             if (e.key === 'Enter') {
+                e.preventDefault();
                 checkAccess();
             }
         });
 
-        // Очистка поля при фокусе
-        document.getElementById('code-input').addEventListener('focus', function() {
+        // При фокусе — выделять текст
+        inputEl.addEventListener('focus', function() {
             this.select();
         });
     </script>
