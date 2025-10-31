@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-    <title>Доступ к видео</title>
+    <title>MANS QUEST</title>
     <style>
         body {
             font-family: Arial, sans-serif;
@@ -142,28 +142,28 @@
         </div>
 
         <div class="instructions">
-            <h3>Инструкция:</h3>
-            <p>Для получения доступа введите правильный код в поле ниже и нажмите "Продолжить". Код вводится <strong>только заглавными буквами</strong> — ввод автоматически приведётся к верхнему регистру.</p>
+            <h3>Instructions:</h3>
+            <p>Whatch the video and enter the characters poses to the field. Example: LUDRRDUL (First letter of the pose) DON'T ENTER THE IDLE POSE</p>
         </div>
 
         <form id="access-form" class="access-form" onsubmit="return false;" aria-label="Форма доступа">
             <div class="input-group">
-                <label for="code-input">Введите код доступа:</label>
+                <label for="code-input">Enter the answer:</label>
                 <input type="text" id="code-input" placeholder="Введите код здесь (только заглавные буквы)" autocomplete="off" inputmode="latin">
             </div>
-            <button type="button" id="submit-btn">Продолжить</button>
+            <button type="button" id="submit-btn">Continue</button>
 
-            <div id="error-message" class="error" role="status" aria-live="polite">❌ Неверный код! Попробуйте снова.</div>
+            <div id="error-message" class="error" role="status" aria-live="polite">❌ ENTER THE RIGHT ANSWER.</div>
             <div id="success-message" class="success" role="status" aria-live="polite">
-                ✅ Доступ разрешен! Перенаправляем...
+                ✅ Answer the right! Wait...
                 <div class="loader" aria-hidden="true"></div>
             </div>
         </form>
 
         <div id="redirect-section" class="hidden" aria-hidden="true">
             <div class="redirect-message">
-                <h2>Доступ получен!</h2>
-                <p>Вы будете перенаправлены на защищённую страницу...</p>
+                <h2>Link is open...</h2>
+                <p>You will redirected to link</p>
             </div>
         </div>
     </div>
@@ -198,7 +198,7 @@
         });
 
         function showError(msg) {
-            errorEl.textContent = "❌ " + (msg || "Неверный код! Попробуйте снова.");
+            errorEl.textContent = "❌ " + (msg || "ENTER THE RIGHT ANSWER");
             errorEl.style.display = 'block';
             // визуальная подсказка на поле
             inputEl.style.borderColor = '#d32f2f';
@@ -223,7 +223,7 @@
             redirectSection.setAttribute('aria-hidden', 'true');
 
             if (!userInput) {
-                showError("Поле не может быть пустым.");
+                showError("Field is empty..");
                 return;
             }
 
